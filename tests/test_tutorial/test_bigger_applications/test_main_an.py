@@ -8,8 +8,7 @@ from fastapi.utils import match_pydantic_error_url
 def get_client():
     from docs_src.bigger_applications.app_an.main import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 def test_users_token_jessica(client: TestClient):

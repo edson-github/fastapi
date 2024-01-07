@@ -55,7 +55,7 @@ validation_error_response_definition = {
         "detail": {
             "title": "Detail",
             "type": "array",
-            "items": {"$ref": REF_PREFIX + "ValidationError"},
+            "items": {"$ref": f"{REF_PREFIX}ValidationError"},
         }
     },
 }
@@ -150,9 +150,8 @@ def get_openapi_operation_request_body(
     )
     field_info = cast(Body, body_field.field_info)
     request_media_type = field_info.media_type
-    required = body_field.required
     request_body_oai: Dict[str, Any] = {}
-    if required:
+    if required := body_field.required:
         request_body_oai["required"] = required
     request_media_content: Dict[str, Any] = {"schema": body_schema}
     if field_info.openapi_examples:
@@ -181,9 +180,7 @@ def generate_operation_id(
 
 
 def generate_operation_summary(*, route: routing.APIRoute, method: str) -> str:
-    if route.summary:
-        return route.summary
-    return route.name.replace("_", " ").title()
+    return route.summary if route.summary else route.name.replace("_", " ").title()
 
 
 def get_openapi_operation_metadata(
@@ -201,8 +198,9 @@ def get_openapi_operation_metadata(
             f"Duplicate Operation ID {operation_id} for function "
             + f"{route.endpoint.__name__}"
         )
-        file_name = getattr(route.endpoint, "__globals__", {}).get("__file__")
-        if file_name:
+        if file_name := getattr(route.endpoint, "__globals__", {}).get(
+            "__file__"
+        ):
             message += f" at {file_name}"
         warnings.warn(message, stacklevel=1)
     operation_ids.add(operation_id)
@@ -270,14 +268,13 @@ def get_openapi_path(
                 all_parameters.update(required_parameters)
                 operation["parameters"] = list(all_parameters.values())
             if method in METHODS_WITH_BODY:
-                request_body_oai = get_openapi_operation_request_body(
+                if request_body_oai := get_openapi_operation_request_body(
                     body_field=route.body_field,
                     schema_generator=schema_generator,
                     model_name_map=model_name_map,
                     field_mapping=field_mapping,
                     separate_input_output_schemas=separate_input_output_schemas,
-                )
-                if request_body_oai:
+                ):
                     operation["requestBody"] = request_body_oai
             if route.callbacks:
                 callbacks = {}
@@ -379,15 +376,17 @@ def get_openapi_path(
                     deep_dict_update(openapi_response, process_response)
                     openapi_response["description"] = description
             http422 = str(HTTP_422_UNPROCESSABLE_ENTITY)
-            if (all_route_params or route.body_field) and not any(
-                status in operation["responses"]
+            if (all_route_params or route.body_field) and all(
+                status not in operation["responses"]
                 for status in [http422, "4XX", "default"]
             ):
                 operation["responses"][http422] = {
                     "description": "Validation Error",
                     "content": {
                         "application/json": {
-                            "schema": {"$ref": REF_PREFIX + "HTTPValidationError"}
+                            "schema": {
+                                "$ref": f"{REF_PREFIX}HTTPValidationError"
+                            }
                         }
                     },
                 }
@@ -429,10 +428,11 @@ def get_fields_from_routes(
             params = get_flat_params(route.dependant)
             request_fields_from_routes.extend(params)
 
-    flat_models = callback_flat_models + list(
-        body_fields_from_routes + responses_from_routes + request_fields_from_routes
+    return callback_flat_models + list(
+        body_fields_from_routes
+        + responses_from_routes
+        + request_fields_from_routes
     )
-    return flat_models
 
 
 def get_openapi(
@@ -480,15 +480,14 @@ def get_openapi(
     )
     for route in routes or []:
         if isinstance(route, routing.APIRoute):
-            result = get_openapi_path(
+            if result := get_openapi_path(
                 route=route,
                 operation_ids=operation_ids,
                 schema_generator=schema_generator,
                 model_name_map=model_name_map,
                 field_mapping=field_mapping,
                 separate_input_output_schemas=separate_input_output_schemas,
-            )
-            if result:
+            ):
                 path, security_schemes, path_definitions = result
                 if path:
                     paths.setdefault(route.path_format, {}).update(path)
@@ -500,15 +499,14 @@ def get_openapi(
                     definitions.update(path_definitions)
     for webhook in webhooks or []:
         if isinstance(webhook, routing.APIRoute):
-            result = get_openapi_path(
+            if result := get_openapi_path(
                 route=webhook,
                 operation_ids=operation_ids,
                 schema_generator=schema_generator,
                 model_name_map=model_name_map,
                 field_mapping=field_mapping,
                 separate_input_output_schemas=separate_input_output_schemas,
-            )
-            if result:
+            ):
                 path, security_schemes, path_definitions = result
                 if path:
                     webhook_paths.setdefault(webhook.path_format, {}).update(path)

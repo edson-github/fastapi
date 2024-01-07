@@ -10,8 +10,7 @@ def get_client() -> TestClient:
 
     importlib.reload(tutorial001)
 
-    client = TestClient(tutorial001.app)
-    return client
+    return TestClient(tutorial001.app)
 
 
 @needs_pydanticv2

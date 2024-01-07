@@ -10,8 +10,7 @@ from ...utils import needs_py310
 def get_client():
     from docs_src.body_fields.tutorial001_an_py310 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 @needs_py310

@@ -8,8 +8,7 @@ from ...utils import needs_py39, needs_pydanticv1, needs_pydanticv2
 def get_client():
     from docs_src.body_updates.tutorial001_py39 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 @needs_py39

@@ -9,8 +9,7 @@ from ...utils import needs_pydanticv2
 def get_client():
     from docs_src.path_operation_advanced_configuration.tutorial007 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 @needs_pydanticv2

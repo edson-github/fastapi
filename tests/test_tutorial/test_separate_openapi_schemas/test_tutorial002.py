@@ -8,8 +8,7 @@ from ...utils import needs_pydanticv2
 def get_client() -> TestClient:
     from docs_src.separate_openapi_schemas.tutorial002 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 def test_create_item(client: TestClient) -> None:

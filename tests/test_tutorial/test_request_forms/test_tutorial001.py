@@ -8,8 +8,7 @@ from fastapi.utils import match_pydantic_error_url
 def get_client():
     from docs_src.request_forms.tutorial001 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 def test_post_body_form(client: TestClient):

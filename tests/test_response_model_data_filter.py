@@ -40,8 +40,7 @@ async def read_pet(pet_id: int):
         email="johndoe@example.com",
         hashed_password="secrethashed",
     )
-    pet = PetDB(name="Nibbler", owner=user)
-    return pet
+    return PetDB(name="Nibbler", owner=user)
 
 
 @app.get("/pets/", response_model=List[PetOut])

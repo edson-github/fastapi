@@ -25,8 +25,7 @@ def get_missing_translation_content(docs_dir: str) -> str:
 def get_mkdocs_material_langs() -> List[str]:
     material_path = Path(material.__file__).parent
     material_langs_path = material_path / "templates" / "partials" / "languages"
-    langs = [file.stem for file in material_langs_path.glob("*.html")]
-    return langs
+    return [file.stem for file in material_langs_path.glob("*.html")]
 
 
 class EnFile(File):
@@ -39,7 +38,7 @@ def on_config(config: MkDocsConfig, **kwargs: Any) -> MkDocsConfig:
     lang = dir_path.parent.name
     if lang in available_langs:
         config.theme["language"] = lang
-    if not (config.site_url or "").endswith(f"{lang}/") and not lang == "en":
+    if not (config.site_url or "").endswith(f"{lang}/") and lang != "en":
         config.site_url = f"{config.site_url}{lang}/"
     return config
 
@@ -107,9 +106,7 @@ def generate_renamed_section_items(
             # new_section = Section(title=new_title, children=new_children)
             item.title = new_title
             item.children = new_children
-            new_items.append(item)
-        else:
-            new_items.append(item)
+        new_items.append(item)
     return new_items
 
 
@@ -127,14 +124,14 @@ def on_pre_page(page: Page, *, config: MkDocsConfig, files: Files) -> Page:
 def on_page_markdown(
     markdown: str, *, page: Page, config: MkDocsConfig, files: Files
 ) -> str:
-    if isinstance(page.file, EnFile):
-        for excluded_section in non_traslated_sections:
-            if page.file.src_path.startswith(excluded_section):
-                return markdown
-        missing_translation_content = get_missing_translation_content(config.docs_dir)
-        header = ""
-        body = markdown
-        if markdown.startswith("#"):
-            header, _, body = markdown.partition("\n\n")
-        return f"{header}\n\n{missing_translation_content}\n\n{body}"
-    return markdown
+    if not isinstance(page.file, EnFile):
+        return markdown
+    for excluded_section in non_traslated_sections:
+        if page.file.src_path.startswith(excluded_section):
+            return markdown
+    missing_translation_content = get_missing_translation_content(config.docs_dir)
+    header = ""
+    body = markdown
+    if markdown.startswith("#"):
+        header, _, body = markdown.partition("\n\n")
+    return f"{header}\n\n{missing_translation_content}\n\n{body}"

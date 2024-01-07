@@ -14,12 +14,9 @@ def get_client():
 
         @app.get("/items/")
         async def read_items(
-            q: Annotated[str | None, Query(regex="^fixedquery$")] = None
-        ):
-            if q:
-                return f"Hello {q}"
-            else:
-                return "Hello World"
+                    q: Annotated[str | None, Query(regex="^fixedquery$")] = None
+                ):
+            return f"Hello {q}" if q else "Hello World"
 
     client = TestClient(app)
     return client

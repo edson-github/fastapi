@@ -80,8 +80,9 @@ def _prepare_response_content(
     exclude_none: bool = False,
 ) -> Any:
     if isinstance(res, BaseModel):
-        read_with_orm_mode = getattr(_get_model_config(res), "read_with_orm_mode", None)
-        if read_with_orm_mode:
+        if read_with_orm_mode := getattr(
+            _get_model_config(res), "read_with_orm_mode", None
+        ):
             # Let from_orm extract the data from this model instead of converting
             # it now to a dict.
             # Otherwise, there's no way to extract lazy data that requires attribute
@@ -131,43 +132,34 @@ async def serialize_response(
     exclude_none: bool = False,
     is_coroutine: bool = True,
 ) -> Any:
-    if field:
-        errors = []
-        if not hasattr(field, "serialize"):
-            # pydantic v1
-            response_content = _prepare_response_content(
-                response_content,
-                exclude_unset=exclude_unset,
-                exclude_defaults=exclude_defaults,
-                exclude_none=exclude_none,
-            )
-        if is_coroutine:
-            value, errors_ = field.validate(response_content, {}, loc=("response",))
-        else:
-            value, errors_ = await run_in_threadpool(
-                field.validate, response_content, {}, loc=("response",)
-            )
-        if isinstance(errors_, list):
-            errors.extend(errors_)
-        elif errors_:
-            errors.append(errors_)
-        if errors:
-            raise ResponseValidationError(
-                errors=_normalize_errors(errors), body=response_content
-            )
+    if not field:
+        return jsonable_encoder(response_content)
+    errors = []
+    if not hasattr(field, "serialize"):
+        # pydantic v1
+        response_content = _prepare_response_content(
+            response_content,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+        )
+    if is_coroutine:
+        value, errors_ = field.validate(response_content, {}, loc=("response",))
+    else:
+        value, errors_ = await run_in_threadpool(
+            field.validate, response_content, {}, loc=("response",)
+        )
+    if isinstance(errors_, list):
+        errors.extend(errors_)
+    elif errors_:
+        errors.append(errors_)
+    if errors:
+        raise ResponseValidationError(
+            errors=_normalize_errors(errors), body=response_content
+        )
 
-        if hasattr(field, "serialize"):
-            return field.serialize(
-                value,
-                include=include,
-                exclude=exclude,
-                by_alias=by_alias,
-                exclude_unset=exclude_unset,
-                exclude_defaults=exclude_defaults,
-                exclude_none=exclude_none,
-            )
-
-        return jsonable_encoder(
+    if hasattr(field, "serialize"):
+        return field.serialize(
             value,
             include=include,
             exclude=exclude,
@@ -176,8 +168,16 @@ async def serialize_response(
             exclude_defaults=exclude_defaults,
             exclude_none=exclude_none,
         )
-    else:
-        return jsonable_encoder(response_content)
+
+    return jsonable_encoder(
+        value,
+        include=include,
+        exclude=exclude,
+        by_alias=by_alias,
+        exclude_unset=exclude_unset,
+        exclude_defaults=exclude_defaults,
+        exclude_none=exclude_none,
+    )
 
 
 async def run_endpoint_function(
@@ -243,10 +243,7 @@ def get_request_handler(
                                     subtype = message.get_content_subtype()
                                     if subtype == "json" or subtype.endswith("+json"):
                                         json_body = await request.json()
-                            if json_body != Undefined:
-                                body = json_body
-                            else:
-                                body = body_bytes
+                            body = json_body if json_body != Undefined else body_bytes
             except json.JSONDecodeError as e:
                 validation_error = RequestValidationError(
                     [
@@ -480,7 +477,7 @@ class APIRoute(routing.Route):
             assert is_body_allowed_for_status_code(
                 status_code
             ), f"Status code {status_code} must not have a response body"
-            response_name = "Response_" + self.unique_id
+            response_name = f"Response_{self.unique_id}"
             self.response_field = create_response_field(
                 name=response_name,
                 type_=self.response_model,
@@ -508,19 +505,14 @@ class APIRoute(routing.Route):
         response_fields = {}
         for additional_status_code, response in self.responses.items():
             assert isinstance(response, dict), "An additional response must be a dict"
-            model = response.get("model")
-            if model:
+            if model := response.get("model"):
                 assert is_body_allowed_for_status_code(
                     additional_status_code
                 ), f"Status code {additional_status_code} must not have a response body"
                 response_name = f"Response_{additional_status_code}_{self.unique_id}"
                 response_field = create_response_field(name=response_name, type_=model)
                 response_fields[additional_status_code] = response_field
-        if response_fields:
-            self.response_fields: Dict[Union[int, str], ModelField] = response_fields
-        else:
-            self.response_fields = {}
-
+        self.response_fields = response_fields if response_fields else {}
         assert callable(endpoint), "An endpoint must be a callable"
         self.dependant = get_dependant(path=self.path_format, call=self.endpoint)
         for depends in self.dependencies[::-1]:

@@ -8,8 +8,7 @@ from ...utils import needs_py310, needs_pydanticv1, needs_pydanticv2
 def get_client():
     from docs_src.path_operation_configuration.tutorial005_py310 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 @needs_py310

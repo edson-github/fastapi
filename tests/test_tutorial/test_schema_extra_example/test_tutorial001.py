@@ -8,8 +8,7 @@ from ...utils import needs_pydanticv2
 def get_client():
     from docs_src.schema_extra_example.tutorial001 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 @needs_pydanticv2

@@ -8,8 +8,7 @@ from ...utils import needs_pydanticv1, needs_pydanticv2
 def get_client():
     from docs_src.body_updates.tutorial001 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 def test_get(client: TestClient):

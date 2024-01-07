@@ -10,8 +10,7 @@ from fastapi.utils import match_pydantic_error_url
 def client():
     from docs_src.body.tutorial001 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 def test_body_float(client: TestClient):

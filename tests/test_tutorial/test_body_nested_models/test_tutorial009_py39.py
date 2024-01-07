@@ -10,8 +10,7 @@ from ...utils import needs_py39
 def get_client():
     from docs_src.body_nested_models.tutorial009_py39 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 @needs_py39
