@@ -10,8 +10,7 @@ from ...utils import needs_py310
 def get_client():
     from docs_src.query_params_str_validations.tutorial010_py310 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 @needs_py310

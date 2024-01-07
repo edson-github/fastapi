@@ -12,8 +12,7 @@ from ...utils import needs_py310
 def client():
     from docs_src.body.tutorial001_py310 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 @needs_py310

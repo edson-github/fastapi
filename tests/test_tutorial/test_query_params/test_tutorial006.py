@@ -8,8 +8,7 @@ from fastapi.utils import match_pydantic_error_url
 def get_client():
     from docs_src.query_params.tutorial006 import app
 
-    c = TestClient(app)
-    return c
+    return TestClient(app)
 
 
 def test_foo_needy_very(client: TestClient):

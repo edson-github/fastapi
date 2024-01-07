@@ -412,9 +412,7 @@ else:
                     if not is_pv1_scalar_field(sub_field):
                         return False
             return True
-        if _annotation_is_sequence(field.type_):
-            return True
-        return False
+        return bool(_annotation_is_sequence(field.type_))
 
     def _normalize_errors(errors: Sequence[Any]) -> List[Dict[str, Any]]:
         use_errors: List[Any] = []

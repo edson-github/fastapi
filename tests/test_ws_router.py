@@ -230,7 +230,7 @@ def test_depend_validation():
     # the validation error does produce a close message
     assert e.value.code == status.WS_1008_POLICY_VIOLATION
     # and no error is leaked
-    assert caught == []
+    assert not caught
 
 
 def test_depend_err_middleware():

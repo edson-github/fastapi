@@ -216,8 +216,7 @@ def get_typed_signature(call: Callable[..., Any]) -> inspect.Signature:
         )
         for param in signature.parameters.values()
     ]
-    typed_signature = inspect.Signature(typed_params)
-    return typed_signature
+    return inspect.Signature(typed_params)
 
 
 def get_typed_annotation(annotation: Any, globalns: Dict[str, Any]) -> Any:
@@ -336,12 +335,11 @@ def analyze_param(
             for arg in annotated_args[1:]
             if isinstance(arg, (FieldInfo, params.Depends))
         ]
-        fastapi_specific_annotations = [
+        if fastapi_specific_annotations := [
             arg
             for arg in fastapi_annotations
             if isinstance(arg, (params.Param, params.Body, params.Depends))
-        ]
-        if fastapi_specific_annotations:
+        ]:
             fastapi_annotation: Union[
                 FieldInfo, params.Depends, None
             ] = fastapi_specific_annotations[-1]
@@ -698,11 +696,7 @@ async def request_body_to_args(
 
         for field in required_params:
             loc: Tuple[str, ...]
-            if field_alias_omitted:
-                loc = ("body",)
-            else:
-                loc = ("body", field.alias)
-
+            loc = ("body", ) if field_alias_omitted else ("body", field.alias)
             value: Optional[Any] = None
             if received_body is not None:
                 if (is_sequence_field(field)) and isinstance(received_body, FormData):
@@ -780,7 +774,7 @@ def get_body_field(*, dependant: Dependant, name: str) -> Optional[ModelField]:
     # That is combined (embedded) with other body fields
     for param in flat_dependant.body_params:
         setattr(param.field_info, "embed", True)  # noqa: B010
-    model_name = "Body_" + name
+    model_name = f"Body_{name}"
     BodyModel = create_body_model(
         fields=flat_dependant.body_params, model_name=model_name
     )

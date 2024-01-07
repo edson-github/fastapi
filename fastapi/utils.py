@@ -53,7 +53,7 @@ def is_body_allowed_for_status_code(status_code: Union[int, str, None]) -> bool:
     }:
         return True
     current_status_code = int(status_code)
-    return not (current_status_code < 200 or current_status_code in {204, 304})
+    return current_status_code >= 200 and current_status_code not in {204, 304}
 
 
 def get_path_param_names(path: str) -> Set[str]:
@@ -74,7 +74,6 @@ def create_response_field(
     """
     Create a new response field. Raises if type_ is invalid.
     """
-    class_validators = class_validators or {}
     if PYDANTIC_V2:
         field_info = field_info or FieldInfo(
             annotation=type_, default=default, alias=alias
@@ -83,8 +82,9 @@ def create_response_field(
         field_info = field_info or FieldInfo()
     kwargs = {"name": name, "field_info": field_info}
     if PYDANTIC_V2:
-        kwargs.update({"mode": mode})
+        kwargs["mode"] = mode
     else:
+        class_validators = class_validators or {}
         kwargs.update(
             {
                 "type_": type_,
@@ -175,7 +175,7 @@ def generate_operation_id_for_path(
     )
     operation_id = name + path
     operation_id = re.sub(r"\W", "_", operation_id)
-    operation_id = operation_id + "_" + method.lower()
+    operation_id = f"{operation_id}_{method.lower()}"
     return operation_id
 
 
@@ -183,7 +183,7 @@ def generate_unique_id(route: "APIRoute") -> str:
     operation_id = route.name + route.path_format
     operation_id = re.sub(r"\W", "_", operation_id)
     assert route.methods
-    operation_id = operation_id + "_" + list(route.methods)[0].lower()
+    operation_id = f"{operation_id}_{list(route.methods)[0].lower()}"
     return operation_id
 
 

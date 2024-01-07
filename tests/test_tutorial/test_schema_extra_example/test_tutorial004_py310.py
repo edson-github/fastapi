@@ -9,8 +9,7 @@ from ...utils import needs_py310
 def get_client():
     from docs_src.schema_extra_example.tutorial004_py310 import app
 
-    client = TestClient(app)
-    return client
+    return TestClient(app)
 
 
 # Test required and embedded body parameters with no bodies sent
